@@ -205,13 +205,21 @@ app.post('/api/profile/:id/appointments', async (req, res) => {
   res.status(201).json(appt);
 });
 
-// 4. Adaption Labs AI Prescription Simplifier
+// 4. Adaption Labs AI Prescription Simplifier & Translator
 app.post('/api/ai/simplify', async (req, res) => {
   const instructions = sanitize(req.body.instructions);
+  const language = sanitize(req.body.language) || 'English';
   if (!instructions) return res.status(400).json({ error: 'Instructions required' });
+
+  const localFallback = {
+    Tamil: `எளிய வழிகாட்டி: ${instructions} (ஒரு டம்ளர் தண்ணீருடன் உட்கார்ந்த நிலையில் மாத்திரையை எடுத்துக்கொள்ளவும்.)`,
+    Hindi: `सरल निर्देश: ${instructions} (कृपया एक गिलास पानी के साथ बैठकर दवा लें।)`,
+    English: `Simple Guide: ${instructions} (Drink a full glass of water and sit upright.)`
+  };
+
   try {
     if (!process.env.ADAPTION_API_KEY || process.env.ADAPTION_API_KEY.includes('your_')) {
-      return res.json({ simplified: `Simple Guide: ${instructions} (Drink a full glass of water and sit upright.)` });
+      return res.json({ simplified: localFallback[language] || localFallback.English });
     }
     const response = await fetch(process.env.ADAPTION_API_URL || 'https://adaptionlabs.ai', {
       method: 'POST',
@@ -221,16 +229,17 @@ app.post('/api/ai/simplify', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'adaption-default',
-        messages: [{ role: 'user', content: `Rewrite this medication instruction in warm, ultra-simple 1-sentence language for an elderly person: "${instructions}"` }]
+        messages: [{ role: 'user', content: `Translate and rewrite this medication instruction in warm, ultra-simple 1-sentence ${language} for an elderly person: "${instructions}"` }]
       })
     });
     const data = await response.json();
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    res.json({ simplified: content || `Simple Guide: ${instructions}` });
+    res.json({ simplified: content || localFallback[language] || localFallback.English });
   } catch (_) {
-    res.json({ simplified: `Simple Guide: ${instructions}` });
+    res.json({ simplified: localFallback[language] || localFallback.English });
   }
 });
+
 
 // 5. Proactive Email Reminders
 app.post('/api/profile/:id/remind', async (req, res) => {

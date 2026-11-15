@@ -211,14 +211,36 @@
       render();
     }
 
-    async function simplify(text, elId) {
-      document.getElementById(elId).innerText = 'AI Simplifying...';
+        async function simplify(text, elId) {
+      const language = document.getElementById('langSelect').value;
+      document.getElementById(elId).innerText = `AI Translating & Simplifying (${language})...`;
       const res = await fetch('/api/ai/simplify', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instructions: text })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructions: text, language })
       });
       const data = await res.json();
       document.getElementById(elId).innerText = data.simplified;
     }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return announce('Voice read-aloud not supported in this browser.');
+      window.speechSynthesis.cancel();
+      const selectedLang = document.getElementById('langSelect').value;
+      const langMap = { English: 'en-IN', Tamil: 'ta-IN', Hindi: 'hi-IN' };
+      const targetLang = langMap[selectedLang] || 'en-IN';
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = targetLang;
+      utterance.rate = 0.88;
+
+      const voices = window.speechSynthesis.getVoices();
+      const matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang.split('-')[0]));
+      if (matchedVoice) utterance.voice = matchedVoice;
+
+      window.speechSynthesis.speak(utterance);
+      announce(`Reading medication guidance aloud in ${selectedLang}...`);
+    }
+
 
     async function addMed() {
       const name = document.getElementById('medName').value;
