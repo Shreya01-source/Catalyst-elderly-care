@@ -3,54 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CareCircle — Elderly Care & Medication Platform</title>
-  <script src="https://tailwindcss.com"></script>
+  <title>CareCircle AI — Elderly Care & Medication Platform</title>
+  <style>
+    :root { --bg: #090d16; --card: #111827; --card-alt: #1e293b; --border: #334155; --amber: #f59e0b; --emerald: #10b981; --blue: #2563eb; --text: #f8fafc; --muted: #94a3b8; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px; line-height: 1.5; }
+    main { max-width: 740px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    h1 { font-size: 1.65rem; color: var(--amber); font-weight: 800; letter-spacing: -0.02em; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); }
+    .hidden { display: none !important; }
+    input { width: 100%; padding: 12px 14px; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-alt); color: var(--text); font-size: 1rem; }
+    button { cursor: pointer; border: none; border-radius: 10px; font-weight: 700; transition: 0.15s ease; }
+    .btn-primary { width: 100%; background: var(--amber); color: #090d16; padding: 14px; font-size: 1.05rem; margin-top: 14px; }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-secondary { background: var(--card-alt); color: var(--text); border: 1px solid var(--border); padding: 9px 14px; font-size: 0.9rem; }
+    .btn-blue { background: var(--blue); color: #fff; padding: 11px 16px; font-size: 0.95rem; }
+    .btn-take { background: var(--amber); color: #090d16; padding: 12px 18px; font-size: 1rem; white-space: nowrap; }
+    .btn-taken { background: var(--emerald); color: #fff; padding: 12px 18px; font-size: 1rem; white-space: nowrap; }
+    .btn-ai { background: transparent; color: #38bdf8; text-decoration: underline; font-size: 0.85rem; margin-top: 8px; padding: 0; }
+    .med-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .med-card.done { border-color: #059669; background: rgba(16, 185, 129, 0.08); }
+    .pill-time { color: var(--amber); font-weight: 700; }
+    .adherence { color: var(--emerald); font-weight: 700; margin-top: 4px; font-size: 1.05rem; }
+    .appt-item { background: var(--card-alt); padding: 12px 14px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--amber); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 10px; background: var(--card-alt); color: var(--muted); border: 1px solid var(--border); }
+    .tab-btn.active { background: var(--amber); color: #090d16; border-color: var(--amber); }
+    @media (max-width: 540px) { .med-card { flex-direction: column; align-items: stretch; } }
+  </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen font-sans">
-  <main class="max-w-3xl mx-auto p-6">
-    <header class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-      <h1 class="text-2xl font-bold text-amber-400">CareCircle AI</h1>
-      <button id="modeBtn" onclick="toggleMode()" class="hidden bg-slate-800 px-4 py-2 rounded-lg text-sm font-semibold border border-slate-600" aria-label="Switch View Mode">Switch to Caregiver Mode</button>
+<body>
+  <main>
+    <header>
+      <h1>🩺 CareCircle AI</h1>
+      <button id="modeBtn" onclick="toggleMode()" class="btn-secondary hidden" aria-label="Switch View Mode">Switch to Caregiver Mode</button>
     </header>
 
-    <!-- Login Screen -->
-    <section id="loginBox" class="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-4">
-      <h2 class="text-xl font-semibold">Access Shared Care Profile</h2>
-      <p class="text-slate-400 text-sm">Demo Login — ID: <strong class="text-white">demo-elder</strong> | Passcode: <strong class="text-white">123456</strong></p>
-      <input id="profileId" value="demo-elder" placeholder="Profile ID" aria-label="Profile ID" class="w-full p-3 rounded bg-slate-800 border border-slate-700 text-lg" />
-      <input id="passcode" type="password" value="123456" placeholder="Passcode" aria-label="Passcode" class="w-full p-3 rounded bg-slate-800 border border-slate-700 text-lg" />
-      <button onclick="login()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-lg text-lg">Unlock Care Profile</button>
+    <!-- Access / Create Profile Card -->
+    <section id="loginBox" class="card">
+      <div class="tabs">
+        <button id="tabJoin" class="tab-btn active" onclick="switchAuthTab('join')">Join Care Profile</button>
+        <button id="tabCreate" class="tab-btn" onclick="switchAuthTab('create')">Create New Profile</button>
+      </div>
+
+      <div id="joinForm">
+        <p style="color:var(--muted); font-size:0.9rem;">Demo Login — ID: <strong style="color:#fff;">demo-elder</strong> | Passcode: <strong style="color:#fff;">123456</strong></p>
+        <input id="profileId" value="demo-elder" placeholder="Profile ID" aria-label="Profile ID" />
+        <input id="passcode" type="password" value="123456" placeholder="Passcode" aria-label="Passcode" />
+        <button onclick="login()" class="btn-primary">Unlock Care Profile</button>
+      </div>
+
+      <div id="createForm" class="hidden">
+        <p style="color:var(--muted); font-size:0.9rem;">Create a passcode-protected profile to share with family & caretakers.</p>
+        <input id="newId" placeholder="Choose Profile ID (e.g. dad-care)" />
+        <input id="newElderName" placeholder="Elderly Person's Full Name" />
+        <input id="newEmail" type="email" placeholder="Caregiver Alert Email" />
+        <input id="newPasscode" type="password" placeholder="Create 4-6 Digit Passcode" />
+        <button onclick="createProfile()" class="btn-primary" style="background:var(--emerald);">Create & Open Care Profile</button>
+      </div>
     </section>
 
-    <!-- Main App -->
-    <section id="appBox" class="hidden space-y-6">
-      <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex justify-between items-center">
+    <!-- Main Dashboard -->
+    <section id="appBox" class="hidden">
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <h2 id="elderTitle" class="text-2xl font-bold"></h2>
-          <p id="adherenceStats" class="text-emerald-400 font-semibold mt-1"></p>
+          <h2 id="elderTitle" style="font-size:1.45rem;"></h2>
+          <p id="adherenceStats" class="adherence"></p>
         </div>
-        <button onclick="sendReminder()" class="bg-blue-600 hover:bg-blue-500 px-4 py-3 rounded-lg font-semibold">Send Email Alert</button>
+        <button onclick="sendReminder()" class="btn-blue">📧 Send Email Alert</button>
       </div>
 
-      <!-- Medications List -->
-      <div class="space-y-3">
-        <h3 class="text-xl font-bold text-amber-300">Daily Medications</h3>
-        <div id="medList" class="space-y-3"></div>
-      </div>
+      <h3 style="color:var(--amber); margin-bottom:12px; font-size:1.2rem;">Daily Medications</h3>
+      <div id="medList"></div>
 
       <!-- Caregiver Controls -->
-      <div id="caregiverPanel" class="hidden bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-3">
-        <h3 class="text-lg font-bold text-cyan-400">Caregiver: Add Medication</h3>
-        <input id="medName" placeholder="Medicine Name & Dose (e.g. Vitamin D 1000IU)" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
-        <input id="medTime" placeholder="Time (e.g. 01:00 PM)" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
-        <input id="medInst" placeholder="Instructions" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
-        <button onclick="addMed()" class="bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded">Add Schedule</button>
+      <div id="caregiverPanel" class="hidden">
+        <div class="card" style="border-color:#0284c7;">
+          <h3 style="color:#38bdf8; margin-bottom:6px;">Caregiver: Add Medication</h3>
+          <input id="medName" placeholder="Medicine Name & Dose (e.g. Vitamin D 1000IU)" />
+          <input id="medTime" placeholder="Time (e.g. 01:00 PM)" />
+          <input id="medInst" placeholder="Instructions" />
+          <button onclick="addMed()" class="btn-primary" style="background:var(--emerald);">+ Add Medication</button>
+        </div>
+
+        <div class="card" style="border-color:#0284c7;">
+          <h3 style="color:#38bdf8; margin-bottom:6px;">Caregiver: Schedule Doctor Appointment</h3>
+          <input id="apptDoc" placeholder="Doctor Name & Specialty (e.g. Dr. Mehta - Eye Specialist)" />
+          <input id="apptDate" placeholder="Date & Time (e.g. 2026-11-25 11:00 AM)" />
+          <input id="apptLoc" placeholder="Clinic / Hospital Location" />
+          <button onclick="addAppt()" class="btn-primary" style="background:var(--blue); color:#fff;">+ Add Appointment</button>
+        </div>
       </div>
 
-      <!-- Appointments -->
-      <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-2">
-        <h3 class="text-xl font-bold text-amber-300">Upcoming Doctor Appointments</h3>
-        <div id="apptList" class="space-y-2 text-slate-300"></div>
+      <div class="card">
+        <h3 style="color:var(--amber); font-size:1.2rem;">Upcoming Doctor Appointments</h3>
+        <div id="apptList"></div>
       </div>
     </section>
   </main>
@@ -59,7 +107,30 @@
     let currentProfile = null;
     let seniorMode = true;
 
-    async function login() {
+    function switchAuthTab(tab) {
+      document.getElementById('joinForm').classList.toggle('hidden', tab !== 'join');
+      document.getElementById('createForm').classList.toggle('hidden', tab !== 'create');
+      document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+      document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+    }
+
+    async function createProfile() {
+      const id = document.getElementById('newId').value.trim();
+      const elderName = document.getElementById('newElderName').value.trim();
+      const caregiverEmail = document.getElementById('newEmail').value.trim();
+      const passcode = document.getElementById('newPasscode').value.trim();
+      const res = await fetch('/api/profile/create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, elderName, caregiverEmail, passcode })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || 'Could not create profile');
+      document.getElementById('profileId').value = id;
+      document.getElementById('passcode').value = passcode;
+      await login();
+    }
+
+        async function login() {
       const id = document.getElementById('profileId').value;
       const passcode = document.getElementById('passcode').value;
       const res = await fetch('/api/profile/login', {
@@ -100,10 +171,29 @@
       const name = document.getElementById('medName').value;
       const time = document.getElementById('medTime').value;
       const instructions = document.getElementById('medInst').value;
+      if (!name || !time) return alert('Enter medicine name and time');
       const res = await fetch(`/api/profile/${currentProfile.id}/medications`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, time, instructions })
       });
       currentProfile.medications.push(await res.json());
+      document.getElementById('medName').value = '';
+      document.getElementById('medTime').value = '';
+      document.getElementById('medInst').value = '';
+      render();
+    }
+
+    async function addAppt() {
+      const doctor = document.getElementById('apptDoc').value;
+      const date = document.getElementById('apptDate').value;
+      const location = document.getElementById('apptLoc').value;
+      if (!doctor || !date) return alert('Enter doctor name and date');
+      const res = await fetch(`/api/profile/${currentProfile.id}/appointments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ doctor, date, location })
+      });
+      currentProfile.appointments.push(await res.json());
+      document.getElementById('apptDoc').value = '';
+      document.getElementById('apptDate').value = '';
+      document.getElementById('apptLoc').value = '';
       render();
     }
 
@@ -119,22 +209,26 @@
       const total = currentProfile.medications.length;
       document.getElementById('adherenceStats').innerText = `Today's Adherence: ${takenCount}/${total} doses taken (${total ? Math.round((takenCount/total)*100) : 100}%)`;
 
-      document.getElementById('medList').innerHTML = currentProfile.medications.map(m => `
-        <div class="p-4 rounded-xl border ${m.taken ? 'bg-emerald-950/40 border-emerald-700' : 'bg-slate-900 border-slate-700'} flex flex-col sm:flex-row justify-between gap-4">
-          <div>
-            <div class="text-xl font-bold">${m.name} — <span class="text-amber-400">${m.time}</span></div>
-            <p id="inst-${m.id}" class="text-slate-300 mt-1 text-base">${m.instructions}</p>
-            <button onclick="simplify('${m.instructions.replace(/'/g, "\\'")}', 'inst-${m.id}')" class="text-xs text-cyan-400 underline mt-2">✨ Simplify with AI</button>
+      document.getElementById('medList').innerHTML = currentProfile.medications.length
+        ? currentProfile.medications.map(m => `
+          <div class="med-card ${m.taken ? 'done' : ''}">
+            <div>
+              <div style="font-size:1.15rem; font-weight:700;">${m.name} — <span class="pill-time">${m.time}</span></div>
+              <p id="inst-${m.id}" style="color:#cbd5e1; margin-top:4px;">${m.instructions}</p>
+              <button onclick="simplify('${m.instructions.replace(/'/g, "\\'")}', 'inst-${m.id}')" class="btn-ai">✨ Simplify with AI</button>
+            </div>
+            <button onclick="toggleTaken('${m.id}')" class="${m.taken ? 'btn-taken' : 'btn-take'}">
+              ${m.taken ? '✓ Taken' : 'Mark as Taken'}
+            </button>
           </div>
-          <button onclick="toggleTaken('${m.id}')" class="px-5 py-3 rounded-lg font-bold text-lg ${m.taken ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-slate-950'}">
-            ${m.taken ? '✓ Taken' : 'Mark as Taken'}
-          </button>
-        </div>
-      `).join('');
+        `).join('')
+        : '<p style="color:var(--muted); margin-bottom:16px;">No medications scheduled yet. Switch to Caregiver Mode to add one.</p>';
 
-      document.getElementById('apptList').innerHTML = currentProfile.appointments.map(a => `
-        <div class="p-3 bg-slate-800 rounded-lg"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
-      `).join('');
+      document.getElementById('apptList').innerHTML = currentProfile.appointments.length
+        ? currentProfile.appointments.map(a => `
+          <div class="appt-item"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
+        `).join('')
+        : '<p style="color:var(--muted); margin-top:8px;">No upcoming appointments.</p>';
     }
   </script>
 </body>
