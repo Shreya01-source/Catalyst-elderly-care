@@ -9,11 +9,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px; line-height: 1.6; font-size: 1.05rem; }
     main { max-width: 760px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
     h1 { font-size: 1.75rem; color: var(--amber); font-weight: 800; }
     label { display: block; margin-top: 12px; font-weight: 600; color: var(--muted); font-size: 0.95rem; }
     input { width: 100%; padding: 12px 14px; margin-top: 4px; border-radius: 10px; border: 2px solid var(--border); background: var(--card-alt); color: var(--text); font-size: 1.05rem; }
-    input:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+    input:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
     button { cursor: pointer; border: none; border-radius: 10px; font-weight: 700; min-height: 44px; transition: 0.15s ease; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 20px; }
     .hidden { display: none !important; }
@@ -37,18 +37,17 @@
 </head>
 <body>
   <main role="main">
-     <header role="banner">
-   <h1>CareCircle AI</h1>
-   <div style="display:flex; gap:8px; align-items:center;">
-     <select id="langSelect" aria-label="Preferred Language" style="padding:8px 10px; border-radius:8px; background:var(--card-alt); color:var(--text); border:2px solid var(--border); font-weight:600;">
-       <option value="English">English</option>
-       <option value="Tamil">தமிழ் (Tamil)</option>
-       <option value="Hindi">हिन्दी (Hindi)</option>
-     </select>
-     <button id="modeBtn" onclick="toggleMode()" class="btn-secondary hidden" aria-pressed="false">Switch to Caregiver Mode</button>
-   </div>
- </header>
-
+    <header role="banner">
+      <h1>CareCircle AI</h1>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="langSelect" aria-label="Preferred Language" style="padding:8px 10px; border-radius:8px; background:var(--card-alt); color:var(--text); border:2px solid var(--border); font-weight:600; min-height:44px;">
+          <option value="English">English</option>
+          <option value="Tamil">தமிழ் (Tamil)</option>
+          <option value="Hindi">हिन्दी (Hindi)</option>
+        </select>
+        <button id="modeBtn" onclick="toggleMode()" class="btn-secondary hidden" aria-pressed="false">Switch to Caregiver Mode</button>
+      </div>
+    </header>
 
     <div id="liveStatus" class="sr-status hidden" role="status" aria-live="polite"></div>
 
@@ -111,7 +110,7 @@
           <input id="apptDoc" placeholder="e.g. Dr. Mehta (Ophthalmologist)" required />
           <label for="apptDate">Date & Time</label>
           <input id="apptDate" placeholder="e.g. 2026-11-25 11:00 AM" required />
-          <label for="apptLoc">Clinic / Hospital Location</label>
+                    <label for="apptLoc">Clinic / Hospital Location</label>
           <input id="apptLoc" placeholder="Hospital or Clinic Name" />
           <button type="submit" class="btn-primary" style="background:var(--blue); color:#fff;">+ Add Appointment</button>
         </form>
@@ -127,8 +126,9 @@
   <script>
     let currentProfile = null;
     let seniorMode = true;
+    let currentAudio = null;
 
-        function announce(msg) {
+    function announce(msg) {
       const el = document.getElementById('liveStatus');
       el.innerText = msg;
       el.classList.remove('hidden');
@@ -142,16 +142,6 @@
       document.getElementById('tabJoin').setAttribute('aria-selected', tab === 'join');
       document.getElementById('tabCreate').setAttribute('aria-selected', tab === 'create');
     }
-
-     function speakText(text) {
-   if (!('speechSynthesis' in window)) return announce('Voice read-aloud not supported in this browser.');
-   window.speechSynthesis.cancel();
-   const utterance = new SpeechSynthesisUtterance(text);
-   utterance.rate = 0.9; // Slightly slower, clearer pace for elderly users
-   window.speechSynthesis.speak(utterance);
-   announce('Reading medication guidance aloud...');
- }
-
 
     async function createProfile() {
       const id = document.getElementById('newId').value.trim();
@@ -211,7 +201,7 @@
       render();
     }
 
-        async function simplify(text, elId) {
+    async function simplify(text, elId) {
       const language = document.getElementById('langSelect').value;
       document.getElementById(elId).innerText = `AI Translating & Simplifying (${language})...`;
       const res = await fetch('/api/ai/simplify', {
@@ -222,25 +212,29 @@
       document.getElementById(elId).innerText = data.simplified;
     }
 
-    function speakText(text) {
-      if (!('speechSynthesis' in window)) return announce('Voice read-aloud not supported in this browser.');
-      window.speechSynthesis.cancel();
+    async function speakText(text) {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
       const selectedLang = document.getElementById('langSelect').value;
-      const langMap = { English: 'en-IN', Tamil: 'ta-IN', Hindi: 'hi-IN' };
-      const targetLang = langMap[selectedLang] || 'en-IN';
+      const codeMap = { English: 'en', Tamil: 'ta', Hindi: 'hi' };
+      const langCode = codeMap[selectedLang] || 'en';
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = targetLang;
-      utterance.rate = 0.88;
+      let spokenText = text;
+      if (selectedLang !== 'English' && !/[\u0B80-\u0BFF\u0900-\u097F]/.test(text)) {
+        announce(`Translating & speaking in ${selectedLang}...`);
+        const res = await fetch('/api/ai/simplify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instructions: text, language: selectedLang })
+        });
+        const data = await res.json();
+        spokenText = data.simplified || text;
+      } else {
+        announce(`Reading medication guidance aloud in ${selectedLang}...`);
+      }
 
-      const voices = window.speechSynthesis.getVoices();
-      const matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang.split('-')[0]));
-      if (matchedVoice) utterance.voice = matchedVoice;
-
-      window.speechSynthesis.speak(utterance);
-      announce(`Reading medication guidance aloud in ${selectedLang}...`);
+      const directTts = `https://google.com{langCode}&q=${encodeURIComponent(spokenText.slice(0, 180))}`;
+      currentAudio = new Audio(directTts);
+      currentAudio.play().catch(() => announce(`Text ready in ${selectedLang}: ${spokenText}`));
     }
-
 
     async function addMed() {
       const name = document.getElementById('medName').value;
@@ -307,7 +301,6 @@
         <div class="appt-item"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
       `).join('');
     }
-
   </script>
 </body>
 </html>
