@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareCircle — Elderly Care & Medication Platform</title>
+  <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen font-sans">
+  <main class="max-w-3xl mx-auto p-6">
+    <header class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+      <h1 class="text-2xl font-bold text-amber-400">CareCircle AI</h1>
+      <button id="modeBtn" onclick="toggleMode()" class="hidden bg-slate-800 px-4 py-2 rounded-lg text-sm font-semibold border border-slate-600" aria-label="Switch View Mode">Switch to Caregiver Mode</button>
+    </header>
+
+    <!-- Login Screen -->
+    <section id="loginBox" class="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-4">
+      <h2 class="text-xl font-semibold">Access Shared Care Profile</h2>
+      <p class="text-slate-400 text-sm">Demo Login — ID: <strong class="text-white">demo-elder</strong> | Passcode: <strong class="text-white">123456</strong></p>
+      <input id="profileId" value="demo-elder" placeholder="Profile ID" aria-label="Profile ID" class="w-full p-3 rounded bg-slate-800 border border-slate-700 text-lg" />
+      <input id="passcode" type="password" value="123456" placeholder="Passcode" aria-label="Passcode" class="w-full p-3 rounded bg-slate-800 border border-slate-700 text-lg" />
+      <button onclick="login()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-lg text-lg">Unlock Care Profile</button>
+    </section>
+
+    <!-- Main App -->
+    <section id="appBox" class="hidden space-y-6">
+      <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+          <h2 id="elderTitle" class="text-2xl font-bold"></h2>
+          <p id="adherenceStats" class="text-emerald-400 font-semibold mt-1"></p>
+        </div>
+        <button onclick="sendReminder()" class="bg-blue-600 hover:bg-blue-500 px-4 py-3 rounded-lg font-semibold">Send Email Alert</button>
+      </div>
+
+      <!-- Medications List -->
+      <div class="space-y-3">
+        <h3 class="text-xl font-bold text-amber-300">Daily Medications</h3>
+        <div id="medList" class="space-y-3"></div>
+      </div>
+
+      <!-- Caregiver Controls -->
+      <div id="caregiverPanel" class="hidden bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-3">
+        <h3 class="text-lg font-bold text-cyan-400">Caregiver: Add Medication</h3>
+        <input id="medName" placeholder="Medicine Name & Dose (e.g. Vitamin D 1000IU)" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
+        <input id="medTime" placeholder="Time (e.g. 01:00 PM)" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
+        <input id="medInst" placeholder="Instructions" class="w-full p-2.5 rounded bg-slate-800 border border-slate-700" />
+        <button onclick="addMed()" class="bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded">Add Schedule</button>
+      </div>
+
+      <!-- Appointments -->
+      <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xl font-bold text-amber-300">Upcoming Doctor Appointments</h3>
+        <div id="apptList" class="space-y-2 text-slate-300"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let currentProfile = null;
+    let seniorMode = true;
+
+    async function login() {
+      const id = document.getElementById('profileId').value;
+      const passcode = document.getElementById('passcode').value;
+      const res = await fetch('/api/profile/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, passcode })
+      });
+      if (!res.ok) return alert('Invalid ID or Passcode');
+      currentProfile = await res.json();
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('appBox').classList.remove('hidden');
+      document.getElementById('modeBtn').classList.remove('hidden');
+      render();
+    }
+
+    function toggleMode() {
+      seniorMode = !seniorMode;
+      document.getElementById('modeBtn').innerText = seniorMode ? 'Switch to Caregiver Mode' : 'Switch to Senior Mode';
+      document.getElementById('caregiverPanel').classList.toggle('hidden', seniorMode);
+    }
+
+    async function toggleTaken(medId) {
+      const res = await fetch(`/api/profile/${currentProfile.id}/medications/${medId}/toggle`, { method: 'PATCH' });
+      const updated = await res.json();
+      const idx = currentProfile.medications.findIndex(m => m.id === medId);
+      currentProfile.medications[idx] = updated;
+      render();
+    }
+
+    async function simplify(text, elId) {
+      document.getElementById(elId).innerText = 'AI Simplifying...';
+      const res = await fetch('/api/ai/simplify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instructions: text })
+      });
+      const data = await res.json();
+      document.getElementById(elId).innerText = data.simplified;
+    }
+
+    async function addMed() {
+      const name = document.getElementById('medName').value;
+      const time = document.getElementById('medTime').value;
+      const instructions = document.getElementById('medInst').value;
+      const res = await fetch(`/api/profile/${currentProfile.id}/medications`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, time, instructions })
+      });
+      currentProfile.medications.push(await res.json());
+      render();
+    }
+
+    async function sendReminder() {
+      const res = await fetch(`/api/profile/${currentProfile.id}/remind`, { method: 'POST' });
+      const data = await res.json();
+      alert(data.message || data.error);
+    }
+
+    function render() {
+      document.getElementById('elderTitle').innerText = `${currentProfile.elderName}'s Care Plan`;
+      const takenCount = currentProfile.medications.filter(m => m.taken).length;
+      const total = currentProfile.medications.length;
+      document.getElementById('adherenceStats').innerText = `Today's Adherence: ${takenCount}/${total} doses taken (${total ? Math.round((takenCount/total)*100) : 100}%)`;
+
+      document.getElementById('medList').innerHTML = currentProfile.medications.map(m => `
+        <div class="p-4 rounded-xl border ${m.taken ? 'bg-emerald-950/40 border-emerald-700' : 'bg-slate-900 border-slate-700'} flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <div class="text-xl font-bold">${m.name} — <span class="text-amber-400">${m.time}</span></div>
+            <p id="inst-${m.id}" class="text-slate-300 mt-1 text-base">${m.instructions}</p>
+            <button onclick="simplify('${m.instructions.replace(/'/g, "\\'")}', 'inst-${m.id}')" class="text-xs text-cyan-400 underline mt-2">✨ Simplify with AI</button>
+          </div>
+          <button onclick="toggleTaken('${m.id}')" class="px-5 py-3 rounded-lg font-bold text-lg ${m.taken ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-slate-950'}">
+            ${m.taken ? '✓ Taken' : 'Mark as Taken'}
+          </button>
+        </div>
+      `).join('');
+
+      document.getElementById('apptList').innerHTML = currentProfile.appointments.map(a => `
+        <div class="p-3 bg-slate-800 rounded-lg"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
