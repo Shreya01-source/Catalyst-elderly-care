@@ -5,99 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CareCircle AI — Elderly Care & Medication Platform</title>
   <style>
-    :root { --bg: #090d16; --card: #111827; --card-alt: #1e293b; --border: #334155; --amber: #f59e0b; --emerald: #10b981; --blue: #2563eb; --text: #f8fafc; --muted: #94a3b8; }
+    :root { --bg: #090d16; --card: #111827; --card-alt: #1e293b; --border: #475569; --amber: #fbbf24; --emerald: #10b981; --blue: #3b82f6; --red: #ef4444; --text: #ffffff; --muted: #cbd5e1; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px; line-height: 1.5; }
-    main { max-width: 740px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
-    h1 { font-size: 1.65rem; color: var(--amber); font-weight: 800; letter-spacing: -0.02em; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px; line-height: 1.6; font-size: 1.05rem; }
+    main { max-width: 760px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    h1 { font-size: 1.75rem; color: var(--amber); font-weight: 800; }
+    label { display: block; margin-top: 12px; font-weight: 600; color: var(--muted); font-size: 0.95rem; }
+    input { width: 100%; padding: 12px 14px; margin-top: 4px; border-radius: 10px; border: 2px solid var(--border); background: var(--card-alt); color: var(--text); font-size: 1.05rem; }
+    input:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+    button { cursor: pointer; border: none; border-radius: 10px; font-weight: 700; min-height: 44px; transition: 0.15s ease; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 20px; }
     .hidden { display: none !important; }
-    input { width: 100%; padding: 12px 14px; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-alt); color: var(--text); font-size: 1rem; }
-    button { cursor: pointer; border: none; border-radius: 10px; font-weight: 700; transition: 0.15s ease; }
-    .btn-primary { width: 100%; background: var(--amber); color: #090d16; padding: 14px; font-size: 1.05rem; margin-top: 14px; }
-    .btn-primary:hover { filter: brightness(1.08); }
-    .btn-secondary { background: var(--card-alt); color: var(--text); border: 1px solid var(--border); padding: 9px 14px; font-size: 0.9rem; }
-    .btn-blue { background: var(--blue); color: #fff; padding: 11px 16px; font-size: 0.95rem; }
-    .btn-take { background: var(--amber); color: #090d16; padding: 12px 18px; font-size: 1rem; white-space: nowrap; }
-    .btn-taken { background: var(--emerald); color: #fff; padding: 12px 18px; font-size: 1rem; white-space: nowrap; }
-    .btn-ai { background: transparent; color: #38bdf8; text-decoration: underline; font-size: 0.85rem; margin-top: 8px; padding: 0; }
-    .med-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-    .med-card.done { border-color: #059669; background: rgba(16, 185, 129, 0.08); }
-    .pill-time { color: var(--amber); font-weight: 700; }
-    .adherence { color: var(--emerald); font-weight: 700; margin-top: 4px; font-size: 1.05rem; }
-    .appt-item { background: var(--card-alt); padding: 12px 14px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--amber); }
-    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-    .tab-btn { flex: 1; padding: 10px; background: var(--card-alt); color: var(--muted); border: 1px solid var(--border); }
+    .btn-primary { width: 100%; background: var(--amber); color: #090d16; padding: 14px; font-size: 1.1rem; margin-top: 16px; }
+    .btn-secondary { background: var(--card-alt); color: var(--text); border: 2px solid var(--border); padding: 10px 16px; font-size: 0.95rem; }
+    .btn-blue { background: var(--blue); color: #ffffff; padding: 12px 18px; font-size: 1rem; }
+    .btn-take { background: var(--amber); color: #090d16; padding: 12px 18px; font-size: 1rem; }
+    .btn-taken { background: var(--emerald); color: #052e16; padding: 12px 18px; font-size: 1rem; }
+    .btn-miss { background: transparent; color: #fca5a5; border: 1px solid var(--red); padding: 8px 12px; font-size: 0.85rem; }
+    .btn-ai { background: transparent; color: #7dd3fc; text-decoration: underline; font-size: 0.9rem; margin-top: 6px; padding: 0; min-height: auto; }
+    .med-card { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .med-card.done { border-color: var(--emerald); background: rgba(16, 185, 129, 0.1); }
+    .med-card.missed { border-color: var(--red); background: rgba(239, 68, 68, 0.1); }
+    .tabs { display: flex; gap: 10px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 12px; background: var(--card-alt); color: var(--muted); border: 2px solid var(--border); }
     .tab-btn.active { background: var(--amber); color: #090d16; border-color: var(--amber); }
-    @media (max-width: 540px) { .med-card { flex-direction: column; align-items: stretch; } }
+    .appt-item { background: var(--card-alt); padding: 14px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--amber); }
+    .sr-status { background: #1e293b; color: #7dd3fc; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.95rem; }
+    @media (max-width: 560px) { .med-card { flex-direction: column; align-items: stretch; } }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>🩺 CareCircle AI</h1>
-      <button id="modeBtn" onclick="toggleMode()" class="btn-secondary hidden" aria-label="Switch View Mode">Switch to Caregiver Mode</button>
+  <main role="main">
+    <header role="banner">
+      <h1>CareCircle AI</h1>
+      <button id="modeBtn" onclick="toggleMode()" class="btn-secondary hidden" aria-pressed="false">Switch to Caregiver Mode</button>
     </header>
 
-    <!-- Access / Create Profile Card -->
-    <section id="loginBox" class="card">
-      <div class="tabs">
-        <button id="tabJoin" class="tab-btn active" onclick="switchAuthTab('join')">Join Care Profile</button>
-        <button id="tabCreate" class="tab-btn" onclick="switchAuthTab('create')">Create New Profile</button>
+    <div id="liveStatus" class="sr-status hidden" role="status" aria-live="polite"></div>
+
+    <section id="loginBox" class="card" aria-labelledby="authHeading">
+      <h2 id="authHeading" style="font-size:1.35rem; margin-bottom:12px;">Shared Care Profile Access</h2>
+      <div class="tabs" role="tablist">
+        <button id="tabJoin" role="tab" aria-selected="true" class="tab-btn active" onclick="switchAuthTab('join')">Join Care Profile</button>
+        <button id="tabCreate" role="tab" aria-selected="false" class="tab-btn" onclick="switchAuthTab('create')">Create New Profile</button>
       </div>
 
-      <div id="joinForm">
-        <p style="color:var(--muted); font-size:0.9rem;">Demo Login — ID: <strong style="color:#fff;">demo-elder</strong> | Passcode: <strong style="color:#fff;">123456</strong></p>
-        <input id="profileId" value="demo-elder" placeholder="Profile ID" aria-label="Profile ID" />
-        <input id="passcode" type="password" value="123456" placeholder="Passcode" aria-label="Passcode" />
-        <button onclick="login()" class="btn-primary">Unlock Care Profile</button>
-      </div>
+      <form id="joinForm" onsubmit="event.preventDefault(); login();">
+        <p style="color:var(--muted); font-size:0.95rem;">Demo Login — ID: <strong>demo-elder</strong> | Passcode: <strong>123456</strong></p>
+        <label for="profileId">Profile ID</label>
+        <input id="profileId" value="demo-elder" required />
+        <label for="passcode">Security Passcode</label>
+        <input id="passcode" type="password" value="123456" required />
+        <button type="submit" class="btn-primary">Unlock Care Profile</button>
+      </form>
 
-      <div id="createForm" class="hidden">
-        <p style="color:var(--muted); font-size:0.9rem;">Create a passcode-protected profile to share with family & caretakers.</p>
-        <input id="newId" placeholder="Choose Profile ID (e.g. dad-care)" />
-        <input id="newElderName" placeholder="Elderly Person's Full Name" />
-        <input id="newEmail" type="email" placeholder="Caregiver Alert Email" />
-        <input id="newPasscode" type="password" placeholder="Create 4-6 Digit Passcode" />
-        <button onclick="createProfile()" class="btn-primary" style="background:var(--emerald);">Create & Open Care Profile</button>
-      </div>
+      <form id="createForm" class="hidden" onsubmit="event.preventDefault(); createProfile();">
+        <label for="newId">Choose Profile ID</label>
+        <input id="newId" placeholder="e.g. dad-care" required />
+        <label for="newElderName">Elderly Person's Full Name</label>
+        <input id="newElderName" placeholder="Full Name" required />
+        <label for="newEmail">Caregiver Alert Email</label>
+        <input id="newEmail" type="email" placeholder="caregiver@example.com" required />
+        <label for="newPasscode">Create 4-6 Digit Passcode</label>
+        <input id="newPasscode" type="password" minlength="4" placeholder="Passcode" required />
+        <button type="submit" class="btn-primary" style="background:var(--emerald); color:#052e16;">Create & Open Care Profile</button>
+      </form>
     </section>
 
-    <!-- Main Dashboard -->
-    <section id="appBox" class="hidden">
+    <section id="appBox" class="hidden" aria-label="Care Plan Dashboard">
       <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <h2 id="elderTitle" style="font-size:1.45rem;"></h2>
-          <p id="adherenceStats" class="adherence"></p>
+          <h2 id="elderTitle" style="font-size:1.5rem;"></h2>
+          <p id="adherenceStats" style="color:var(--emerald); font-weight:700; margin-top:4px;"></p>
         </div>
-        <button onclick="sendReminder()" class="btn-blue">📧 Send Email Alert</button>
+        <button onclick="sendReminder()" class="btn-blue">Send Email Alert</button>
       </div>
 
-      <h3 style="color:var(--amber); margin-bottom:12px; font-size:1.2rem;">Daily Medications</h3>
+      <h3 style="color:var(--amber); margin-bottom:12px; font-size:1.25rem;">Daily Medications</h3>
       <div id="medList"></div>
 
-      <!-- Caregiver Controls -->
       <div id="caregiverPanel" class="hidden">
-        <div class="card" style="border-color:#0284c7;">
-          <h3 style="color:#38bdf8; margin-bottom:6px;">Caregiver: Add Medication</h3>
-          <input id="medName" placeholder="Medicine Name & Dose (e.g. Vitamin D 1000IU)" />
-          <input id="medTime" placeholder="Time (e.g. 01:00 PM)" />
-          <input id="medInst" placeholder="Instructions" />
-          <button onclick="addMed()" class="btn-primary" style="background:var(--emerald);">+ Add Medication</button>
-        </div>
+        <form class="card" style="border-color:var(--blue);" onsubmit="event.preventDefault(); addMed();">
+          <h3 style="color:#7dd3fc;">Caregiver: Add Medication</h3>
+          <label for="medName">Medication Name & Dosage</label>
+          <input id="medName" placeholder="e.g. Vitamin D 1000IU" required />
+          <label for="medTime">Scheduled Time</label>
+          <input id="medTime" placeholder="e.g. 01:00 PM" required />
+          <label for="medInst">Dosage Instructions</label>
+          <input id="medInst" placeholder="Take after lunch with water" />
+          <button type="submit" class="btn-primary" style="background:var(--emerald); color:#052e16;">+ Add Medication</button>
+        </form>
 
-        <div class="card" style="border-color:#0284c7;">
-          <h3 style="color:#38bdf8; margin-bottom:6px;">Caregiver: Schedule Doctor Appointment</h3>
-          <input id="apptDoc" placeholder="Doctor Name & Specialty (e.g. Dr. Mehta - Eye Specialist)" />
-          <input id="apptDate" placeholder="Date & Time (e.g. 2026-11-25 11:00 AM)" />
-          <input id="apptLoc" placeholder="Clinic / Hospital Location" />
-          <button onclick="addAppt()" class="btn-primary" style="background:var(--blue); color:#fff;">+ Add Appointment</button>
-        </div>
+        <form class="card" style="border-color:var(--blue);" onsubmit="event.preventDefault(); addAppt();">
+          <h3 style="color:#7dd3fc;">Caregiver: Schedule Doctor Appointment</h3>
+          <label for="apptDoc">Doctor Name & Specialty</label>
+          <input id="apptDoc" placeholder="e.g. Dr. Mehta (Ophthalmologist)" required />
+          <label for="apptDate">Date & Time</label>
+          <input id="apptDate" placeholder="e.g. 2026-11-25 11:00 AM" required />
+          <label for="apptLoc">Clinic / Hospital Location</label>
+          <input id="apptLoc" placeholder="Hospital or Clinic Name" />
+          <button type="submit" class="btn-primary" style="background:var(--blue); color:#fff;">+ Add Appointment</button>
+        </form>
       </div>
 
       <div class="card">
-        <h3 style="color:var(--amber); font-size:1.2rem;">Upcoming Doctor Appointments</h3>
+        <h3 style="color:var(--amber); font-size:1.25rem;">Upcoming Doctor Appointments</h3>
         <div id="apptList"></div>
       </div>
     </section>
@@ -107,11 +120,19 @@
     let currentProfile = null;
     let seniorMode = true;
 
+        function announce(msg) {
+      const el = document.getElementById('liveStatus');
+      el.innerText = msg;
+      el.classList.remove('hidden');
+    }
+
     function switchAuthTab(tab) {
       document.getElementById('joinForm').classList.toggle('hidden', tab !== 'join');
       document.getElementById('createForm').classList.toggle('hidden', tab !== 'create');
       document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
       document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+      document.getElementById('tabJoin').setAttribute('aria-selected', tab === 'join');
+      document.getElementById('tabCreate').setAttribute('aria-selected', tab === 'create');
     }
 
     async function createProfile() {
@@ -124,30 +145,34 @@
         body: JSON.stringify({ id, elderName, caregiverEmail, passcode })
       });
       const data = await res.json();
-      if (!res.ok) return alert(data.error || 'Could not create profile');
+      if (!res.ok) return announce(data.error || 'Could not create profile');
       document.getElementById('profileId').value = id;
       document.getElementById('passcode').value = passcode;
       await login();
     }
 
-        async function login() {
+    async function login() {
       const id = document.getElementById('profileId').value;
       const passcode = document.getElementById('passcode').value;
       const res = await fetch('/api/profile/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, passcode })
       });
-      if (!res.ok) return alert('Invalid ID or Passcode');
+      if (!res.ok) return announce('Invalid Profile ID or Passcode');
       currentProfile = await res.json();
       document.getElementById('loginBox').classList.add('hidden');
       document.getElementById('appBox').classList.remove('hidden');
       document.getElementById('modeBtn').classList.remove('hidden');
+      announce(`Unlocked care profile for ${currentProfile.elderName}`);
       render();
     }
 
     function toggleMode() {
       seniorMode = !seniorMode;
-      document.getElementById('modeBtn').innerText = seniorMode ? 'Switch to Caregiver Mode' : 'Switch to Senior Mode';
+      const btn = document.getElementById('modeBtn');
+      btn.innerText = seniorMode ? 'Switch to Caregiver Mode' : 'Switch to Senior Mode';
+      btn.setAttribute('aria-pressed', String(!seniorMode));
       document.getElementById('caregiverPanel').classList.toggle('hidden', seniorMode);
+      announce(seniorMode ? 'Switched to Senior Mode' : 'Switched to Caregiver Mode');
     }
 
     async function toggleTaken(medId) {
@@ -155,6 +180,16 @@
       const updated = await res.json();
       const idx = currentProfile.medications.findIndex(m => m.id === medId);
       currentProfile.medications[idx] = updated;
+      announce(`${updated.name} marked as ${updated.taken ? 'taken' : 'pending'}`);
+      render();
+    }
+
+    async function markMissed(medId) {
+      const res = await fetch(`/api/profile/${currentProfile.id}/medications/${medId}/miss`, { method: 'PATCH' });
+      const updated = await res.json();
+      const idx = currentProfile.medications.findIndex(m => m.id === medId);
+      currentProfile.medications[idx] = updated;
+      announce(`${updated.name} flagged as missed`);
       render();
     }
 
@@ -171,7 +206,6 @@
       const name = document.getElementById('medName').value;
       const time = document.getElementById('medTime').value;
       const instructions = document.getElementById('medInst').value;
-      if (!name || !time) return alert('Enter medicine name and time');
       const res = await fetch(`/api/profile/${currentProfile.id}/medications`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, time, instructions })
       });
@@ -179,6 +213,7 @@
       document.getElementById('medName').value = '';
       document.getElementById('medTime').value = '';
       document.getElementById('medInst').value = '';
+      announce(`Added medication ${name}`);
       render();
     }
 
@@ -186,7 +221,6 @@
       const doctor = document.getElementById('apptDoc').value;
       const date = document.getElementById('apptDate').value;
       const location = document.getElementById('apptLoc').value;
-      if (!doctor || !date) return alert('Enter doctor name and date');
       const res = await fetch(`/api/profile/${currentProfile.id}/appointments`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ doctor, date, location })
       });
@@ -194,13 +228,14 @@
       document.getElementById('apptDoc').value = '';
       document.getElementById('apptDate').value = '';
       document.getElementById('apptLoc').value = '';
+      announce(`Scheduled appointment with ${doctor}`);
       render();
     }
 
     async function sendReminder() {
       const res = await fetch(`/api/profile/${currentProfile.id}/remind`, { method: 'POST' });
       const data = await res.json();
-      alert(data.message || data.error);
+      announce(data.message || data.error);
     }
 
     function render() {
@@ -209,26 +244,25 @@
       const total = currentProfile.medications.length;
       document.getElementById('adherenceStats').innerText = `Today's Adherence: ${takenCount}/${total} doses taken (${total ? Math.round((takenCount/total)*100) : 100}%)`;
 
-      document.getElementById('medList').innerHTML = currentProfile.medications.length
-        ? currentProfile.medications.map(m => `
-          <div class="med-card ${m.taken ? 'done' : ''}">
-            <div>
-              <div style="font-size:1.15rem; font-weight:700;">${m.name} — <span class="pill-time">${m.time}</span></div>
-              <p id="inst-${m.id}" style="color:#cbd5e1; margin-top:4px;">${m.instructions}</p>
-              <button onclick="simplify('${m.instructions.replace(/'/g, "\\'")}', 'inst-${m.id}')" class="btn-ai">✨ Simplify with AI</button>
-            </div>
-            <button onclick="toggleTaken('${m.id}')" class="${m.taken ? 'btn-taken' : 'btn-take'}">
-              ${m.taken ? '✓ Taken' : 'Mark as Taken'}
-            </button>
+      document.getElementById('medList').innerHTML = currentProfile.medications.map(m => `
+        <article class="med-card ${m.taken ? 'done' : m.missed ? 'missed' : ''}">
+          <div>
+            <div style="font-size:1.2rem; font-weight:700;">${m.name} — <span style="color:var(--amber);">${m.time}</span> ${m.missed ? '<span style="color:#fca5a5;">[MISSED]</span>' : ''}</div>
+            <p id="inst-${m.id}" style="color:var(--muted); margin-top:4px;">${m.instructions}</p>
+            <button onclick="simplify('${m.instructions.replace(/'/g, "\\'")}', 'inst-${m.id}')" class="btn-ai">Simplify with AI</button>
           </div>
-        `).join('')
-        : '<p style="color:var(--muted); margin-bottom:16px;">No medications scheduled yet. Switch to Caregiver Mode to add one.</p>';
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="toggleTaken('${m.id}')" class="${m.taken ? 'btn-taken' : 'btn-take'}" aria-pressed="${m.taken}">
+              ${m.taken ? 'Taken' : 'Mark as Taken'}
+            </button>
+            ${!m.taken && !m.missed ? `<button onclick="markMissed('${m.id}')" class="btn-miss">Flag Missed</button>` : ''}
+          </div>
+        </article>
+      `).join('');
 
-      document.getElementById('apptList').innerHTML = currentProfile.appointments.length
-        ? currentProfile.appointments.map(a => `
-          <div class="appt-item"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
-        `).join('')
-        : '<p style="color:var(--muted); margin-top:8px;">No upcoming appointments.</p>';
+      document.getElementById('apptList').innerHTML = currentProfile.appointments.map(a => `
+        <div class="appt-item"><strong>${a.doctor}</strong> — ${a.date} (${a.location})</div>
+      `).join('');
     }
   </script>
 </body>
