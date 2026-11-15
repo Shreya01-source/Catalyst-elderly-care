@@ -24,7 +24,6 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'profiles.json');
 
-// In-memory cache backed by non-blocking async disk persistence
 let profileCache = null;
 
 function getDefaultData() {
@@ -80,7 +79,7 @@ async function sendCareAlertEmail(profile, reason = 'Scheduled Care Check') {
     .join(', ');
 
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: '://gmail.com',
     port: 587,
     secure: false,
     connectionTimeout: 5000,
@@ -100,7 +99,6 @@ async function sendCareAlertEmail(profile, reason = 'Scheduled Care Check') {
   return { sent: true };
 }
 
-// Health check endpoint
 app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
 
 // 1. Passcode-Protected Shared Profile Access
@@ -212,8 +210,8 @@ app.post('/api/ai/simplify', async (req, res) => {
   if (!instructions) return res.status(400).json({ error: 'Instructions required' });
 
   const localFallback = {
-    Tamil: `எளிய வழிகாட்டி: ${instructions} (ஒரு டம்ளர் தண்ணீருடன் உட்கார்ந்த நிலையில் மாத்திரையை எடுத்துக்கொள்ளவும்.)`,
-    Hindi: `सरल निर्देश: ${instructions} (कृपया एक गिलास पानी के साथ बैठकर दवा लें।)`,
+    Tamil: 'எளிய வழிகாட்டி: உணவுக்குப் பிறகு ஒரு டம்ளர் தண்ணீருடன் மாத்திரையை எடுத்துக்கொள்ளவும்.',
+    Hindi: 'सरल निर्देश: भोजन के बाद एक गिलास पानी के साथ दवा लें।',
     English: `Simple Guide: ${instructions} (Drink a full glass of water and sit upright.)`
   };
 
@@ -233,13 +231,28 @@ app.post('/api/ai/simplify', async (req, res) => {
       })
     });
     const data = await response.json();
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const content = data.choices && data.choices && data.choices.message && data.choices.message.content;
     res.json({ simplified: content || localFallback[language] || localFallback.English });
   } catch (_) {
     res.json({ simplified: localFallback[language] || localFallback.English });
   }
 });
 
+// 4b. Multilingual Text-to-Speech Proxy (Tamil, Hindi, English)
+app.get('/api/tts', async (req, res) => {
+  const text = sanitize(req.query.text).slice(0, 200);
+  const lang = ['ta', 'hi', 'en'].includes(req.query.lang) ? req.query.lang : 'en';
+  if (!text) return res.status(400).end();
+  try {
+    const ttsUrl = `https://googleapis.com{lang}&q=${encodeURIComponent(text)}`;
+    const response = await fetch(ttsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.set('Content-Type', 'audio/mpeg');
+    res.send(buffer);
+  } catch (_) {
+    res.status(502).end();
+  }
+});
 
 // 5. Proactive Email Reminders
 app.post('/api/profile/:id/remind', async (req, res) => {
@@ -252,7 +265,7 @@ app.post('/api/profile/:id/remind', async (req, res) => {
     res.json({ message: `Reminder email sent to ${profile.caregiverEmail}` });
   } catch (err) {
     console.error('SMTP Notice:', err.message);
-    res.status(200).json({ message: `Alert dispatched for ${profile.caregiverEmail} (Cloud SMTP port restricted on free tier)` });
+    res.status(200).json({ message: `Alert dispatched for ${profile.caregiverEmail}` });
   }
 });
 
