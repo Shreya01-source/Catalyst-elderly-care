@@ -70,16 +70,45 @@ function sanitize(str) {
 }
 
 async function sendCareAlertEmail(profile, reason = 'Scheduled Care Check') {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS.includes('your_')) {
-    return { sent: false, reason: 'Email credentials not configured' };
-  }
+  const recipient = (profile.caregiverEmail && profile.caregiverEmail !== 'caregiver@example.com')
+    ? profile.caregiverEmail
+    : process.env.EMAIL_USER;
+
+  if (!recipient) return { sent: false, reason: 'No recipient email configured' };
+
   const pending = profile.medications
     .filter(m => !m.taken)
     .map(m => `${m.name} at ${m.time}${m.missed ? ' [MISSED]' : ''}`)
     .join(', ');
 
+  const subject = `[CareCircle Alert - ${reason}] ${profile.elderName}`;
+  const text = `Care Update for ${profile.elderName}:\nPending/Missed Doses: ${pending || 'All doses taken!'}\nUpcoming Appointments: ${profile.appointments.length}`;
+
+  // 1. Cloud HTTPS Email via Resend (bypasses Render SMTP port blocks)
+  if (process.env.RESEND_API_KEY) {
+    const res = await fetch('https://resend.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'CareCircle AI <onboarding@resend.dev>',
+        to: [recipient],
+        subject,
+        text
+      })
+    });
+    if (res.ok) return { sent: true, to: recipient };
+  }
+
+  // 2. Local Nodemailer SMTP Fallback
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS.includes('your_')) {
+    return { sent: false, reason: 'Email credentials not configured' };
+  }
+
   const transporter = nodemailer.createTransport({
-    host: '://gmail.com',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     connectionTimeout: 5000,
@@ -92,11 +121,11 @@ async function sendCareAlertEmail(profile, reason = 'Scheduled Care Check') {
 
   await transporter.sendMail({
     from: `"CareCircle AI" <${process.env.EMAIL_USER}>`,
-    to: profile.caregiverEmail,
-    subject: `[CareCircle Alert - ${reason}] ${profile.elderName}`,
-    text: `Care Update for ${profile.elderName}:\nPending/Missed Doses: ${pending || 'All doses taken!'}\nUpcoming Appointments: ${profile.appointments.length}`
+    to: recipient,
+    subject,
+    text
   });
-  return { sent: true };
+  return { sent: true, to: recipient };
 }
 
 app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
@@ -238,22 +267,6 @@ app.post('/api/ai/simplify', async (req, res) => {
   }
 });
 
-// 4b. Multilingual Text-to-Speech Proxy (Tamil, Hindi, English)
-app.get('/api/tts', async (req, res) => {
-  const text = sanitize(req.query.text).slice(0, 200);
-  const lang = ['ta', 'hi', 'en'].includes(req.query.lang) ? req.query.lang : 'en';
-  if (!text) return res.status(400).end();
-  try {
-    const ttsUrl = `https://googleapis.com{lang}&q=${encodeURIComponent(text)}`;
-    const response = await fetch(ttsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const buffer = Buffer.from(await response.arrayBuffer());
-    res.set('Content-Type', 'audio/mpeg');
-    res.send(buffer);
-  } catch (_) {
-    res.status(502).end();
-  }
-});
-
 // 5. Proactive Email Reminders
 app.post('/api/profile/:id/remind', async (req, res) => {
   const profiles = await getProfiles();
@@ -262,9 +275,9 @@ app.post('/api/profile/:id/remind', async (req, res) => {
   try {
     const result = await sendCareAlertEmail(profile, 'Caregiver Alert');
     if (!result.sent) return res.status(400).json({ error: result.reason });
-    res.json({ message: `Reminder email sent to ${profile.caregiverEmail}` });
+    res.json({ message: `Reminder email sent to ${result.to}` });
   } catch (err) {
-    console.error('SMTP Notice:', err.message);
+    console.error('Email Notice:', err.message);
     res.status(200).json({ message: `Alert dispatched for ${profile.caregiverEmail}` });
   }
 });
